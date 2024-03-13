@@ -1,0 +1,692 @@
+tic tac toe
+
+def is_winner(board, player):
+    # Check rows, columns, and diagonals for a win
+    for i in range(3):
+        if all(board[i][j] == player for j in range(3)) or \
+           all(board[j][i] == player for j in range(3)):
+            return True
+    if all(board[i][i] == player for i in range(3)) or \
+       all(board[i][2 - i] == player for i in range(3)):
+        return True
+    return False
+
+def is_full(board):
+    # Check if the board is full
+    return all(board[i][j] != ' ' for i in range(3) for j in range(3))
+
+def minimax(board, depth, is_maximizing):
+    # Base cases
+    if is_winner(board, 'X'):
+        return -1
+    if is_winner(board, 'O'):
+        return 1
+    if is_full(board):
+        return 0
+
+    # Recursive case
+    if is_maximizing:
+        max_eval = float('-inf')
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == ' ':
+                    board[i][j] = 'O'
+                    eval = minimax(board, depth + 1, False)
+                    board[i][j] = ' '  # Undo the move
+                    max_eval = max(max_eval, eval)
+        return max_eval
+    else:
+        min_eval = float('inf')
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == ' ':
+                    board[i][j] = 'X'
+                    eval = minimax(board, depth + 1, True)
+                    board[i][j] = ' '  # Undo the move
+                    min_eval = min(min_eval, eval)
+        return min_eval
+
+def find_best_move(board):
+    best_val = float('-inf')
+    best_move = (-1, -1)
+
+    for i in range(3):
+        for j in range(3):
+            if board[i][j] == ' ':
+                board[i][j] = 'O'
+                move_val = minimax(board, 0, False)
+                board[i][j] = ' '  # Undo the move
+
+                if move_val > best_val:
+                    best_move = (i, j)
+                    best_val = move_val
+
+    return best_move
+
+def print_board(board):
+    for row in board:
+        print(" | ".join(row))
+        print("---------")
+
+def main():
+    board = [[' ' for _ in range(3)] for _ in range(3)]
+
+    while True:
+        print_board(board)
+        row, col = map(int, input("Enter your move (row and column, separated by space): ").split())
+        if board[row][col] == ' ':
+            board[row][col] = 'X'
+        else:
+            print("Invalid move. Try again.")
+            continue
+
+        if is_winner(board, 'X'):
+            print("You win!")
+            break
+        elif is_full(board):
+            print("It's a draw!")
+            break
+
+        print("Computer's move:")
+        comp_row, comp_col = find_best_move(board)
+        board[comp_row][comp_col] = 'O'
+
+        if is_winner(board, 'O'):
+            print_board(board)
+            print("Computer wins!")
+            break
+        elif is_full(board):
+            print("It's a draw!")
+            break
+
+if __name__ == "__main__":
+    main()
+
+
+--------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+
+
+alpha beta pruning
+
+
+# The minimax function is the heart of the AI. It recursively calculates the optimal move for the AI.
+def minimax(total, turn, alpha, beta):
+    # Base case: if total is 20, it's a draw, so return 0
+    if total == 20:
+        return 0
+    # Base case: if total is more than 20, the last player to move loses
+    elif total > 20:
+        if turn:  # If it's the AI's turn, AI loses, so return -1
+            return -1
+        else:  # If it's the human's turn, human loses, so return 1
+            return 1
+
+    # If it's the AI's turn, we want to maximize the score
+    if turn:
+        max_eval = -float('inf')  # Initialize max_eval to negative infinity
+        for i in range(1, 4):  # For each possible move (1, 2, or 3)
+            # Recursively call minimax for the next state of the game
+            eval = minimax(total + i, False, alpha, beta)
+            max_eval = max(max_eval, eval)  # Update max_eval if necessary
+            alpha = max(alpha, eval)  # Update alpha if necessary
+            if beta <= alpha:  # If beta is less than or equal to alpha, break the loop (alpha-beta pruning)
+                break
+        return max_eval  # Return the maximum evaluation
+    # If it's the human's turn, we want to minimize the score
+    else:
+        min_eval = float('inf')  # Initialize min_eval to positive infinity
+        for i in range(1, 4):  # For each possible move (1, 2, or 3)
+            # Recursively call minimax for the next state of the game
+            eval = minimax(total + i, True, alpha, beta)
+            min_eval = min(min_eval, eval)  # Update min_eval if necessary
+            beta = min(beta, eval)  # Update beta if necessary
+            if beta <= alpha:  # If beta is less than or equal to alpha, break the loop (alpha-beta pruning)
+                break
+        return min_eval  # Return the minimum evaluation
+
+# The total score of the game is initially 0
+total = 0
+
+# Game loop
+while True:
+    # Get the human player's move from input and add it to the total
+    human_move = int(input("Enter your move (1, 2, or 3): "))
+    while human_move not in [1, 2, 3]:  # If the move is not valid, ask for input again
+        print("Invalid move. Please enter 1, 2, or 3.")
+        human_move = int(input("Enter your move (1, 2, or 3): "))
+    total += human_move
+    print(f"After your move, total is {total}")
+    if total >= 20:  # If the total is 20 or more after the human's move, the human wins
+        print("You win!")
+        break
+
+    # If the game is not over, it's the AI's turn
+    print("AI is making its move...")
+    ai_move = 1
+    max_eval = -float('inf')
+    for i in range(1, 4):  # For each possible move (1, 2, or 3)
+        # Call minimax to get the evaluation of the move
+        eval = minimax(total + i, False, -float('inf'), float('inf'))
+        if eval > max_eval:  # If the evaluation is greater than max_eval, update max_eval and ai_move
+            max_eval = eval
+            ai_move = i
+    total += ai_move  # Add the AI's move to the total
+    print(f"AI adds {ai_move}. Total is {total}")
+    if total >= 20:  # If the total is 20 or more after the AI's move, the AI wins
+        print("AI wins!")
+        break
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+a* 8 puzzle
+
+
+import numpy as np
+from queue import PriorityQueue
+
+class State:
+    def __init__(self, state, parent):
+        self.state = state
+        self.parent = parent
+
+    def __lt__(self, other):
+        return False  # Define a default comparison method
+
+class Puzzle:
+    def __init__(self, initial_state, goal_state):
+        self.initial_state = initial_state
+        self.goal_state = goal_state
+
+
+    def print_state(self, state):
+        print(state[:, :])
+
+    def is_goal(self, state):
+        return np.array_equal(state, self.goal_state)
+
+    def get_possible_moves(self, state):
+        possible_moves = []
+        zero_pos = np.where(state == 0)
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # Left, Right, Up, Down
+        for direction in directions:
+            new_pos = (zero_pos[0] + direction[0], zero_pos[1] + direction[1])
+            if 0 <= new_pos[0] < 3 and 0 <= new_pos[1] < 3:  # Check boundaries
+                new_state = np.copy(state)
+                new_state[zero_pos], new_state[new_pos] = new_state[new_pos], new_state[zero_pos]  # Swap
+                possible_moves.append(new_state)
+        return possible_moves
+
+    def heuristic(self, state):
+         return np.count_nonzero(state != self.goal_state)
+
+
+    def solve(self):
+        queue = PriorityQueue()
+        initial_state = State(self.initial_state, None)
+        queue.put((0, initial_state))  # Put State object in queue
+        visited = set()
+
+        while not queue.empty():
+            priority, current_state = queue.get()
+            if self.is_goal(current_state.state):
+                return current_state  # Return final state
+            for move in self.get_possible_moves(current_state.state):
+                move_state = State(move, current_state)  # Create new State for move
+                if str(move_state.state) not in visited:
+                    visited.add(str(move_state.state))
+                    priority = self.heuristic(move_state.state)
+                    queue.put((priority, move_state))  # Put State object in queue
+        return None
+
+# Test the function
+initial_state = np.array([[2, 8, 1], [0, 4, 3], [7, 6, 5]])
+goal_state = np.array([[1, 2, 3], [8, 0, 4], [7, 6, 5]])
+puzzle = Puzzle(initial_state, goal_state)
+solution = puzzle.solve()
+if solution is not None:
+    moves = []
+    while solution is not None:  # Go through parents to get moves
+        moves.append(solution.state)
+        solution = solution.parent
+    for move in reversed(moves):  # Print moves in correct order
+        puzzle.print_state(move)
+else:
+    print("No solution found.")
+
+
+
+
+
+
+
+=========================================================================================================
+
+
+
+
+
+
+
+
+hill climbing
+
+
+import random
+
+def objective_function(x):
+    return x * x
+
+def hill_climbing(starting_point, max_iterations=1000, step_size=0.1):
+    # Initialize the current solution with the user-provided starting point
+    current_solution = starting_point
+    current_value = objective_function(current_solution)
+    
+    # Start iterating
+    for _ in range(max_iterations):
+        # Generate a new solution by adding or subtracting a small step
+        new_solution = current_solution + random.choice([-1, 1]) * step_size
+        
+        # Calculate the value of the new solution
+        new_value = objective_function(new_solution)
+        
+        # If the new solution is better, update the current solution
+        if new_value > current_value:
+            current_solution = new_solution
+            current_value = new_value
+    
+    return current_solution, current_value
+
+# Take user input for the starting point
+starting_point = float(input("Enter your starting point: "))
+
+# Perform hill climbing optimization
+best_solution, best_value = hill_climbing(starting_point)
+
+print("Best solution:", best_solution)
+print("Best value:", best_value)
+
+
+
+
+
+
+
+================================================================================================
+
+
+
+
+
+
+
+
+Logistic regression
+
+
+
+import numpy as np
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# Sigmoid function
+def sigmoid(z):
+    return 1.0 / (1.0 + np.exp(-z))
+
+# Cost function
+def cost_function(h, y):
+    return (-y * np.log(h) - (1 - y) * np.log(1 - h))
+
+# Gradient computation
+def gradient(X, h, y):
+    return np.dot(X.T, (h - y)) / y.shape[0]
+
+# Logistic regression function
+def logistic_regression(X, y, num_iterations, learning_rate):
+    # Initialize weights
+    weights = np.zeros(X.shape[1])
+    
+    for i in range(num_iterations):
+        z = np.dot(X, weights)
+        h = sigmoid(z)
+        gradient_val = gradient(X, h, y)
+        
+        weights -= learning_rate * gradient_val
+    
+    return weights
+
+# Load Iris dataset
+iris = datasets.load_iris()
+X = iris.data[:, :2]  # we only take the first two features (sepal length and width)
+y = (iris.target != 0) * 1  # make problem binary for simplicity
+
+# Split the dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=9)
+
+# Standardize features
+sc = StandardScaler()
+X_train_std = sc.fit_transform(X_train)
+X_test_std = sc.transform(X_test)
+
+# Perform logistic regression
+weights = logistic_regression(X_train_std, y_train, num_iterations=200, learning_rate=0.1)
+
+# Make predictions
+y_pred = sigmoid(np.dot(X_test_std, weights)) > 0.5
+
+# Print accuracy
+print('Accuracy: %.4f' % np.mean(y_pred == y_test))
+
+# Plot decision boundary
+x_min, x_max = X_train_std[:, 0].min() - 1, X_train_std[:, 0].max() + 1
+y_min, y_max = X_train_std[:, 1].min() - 1, X_train_std[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+
+Z = sigmoid(np.dot(np.c_[xx.ravel(), yy.ravel()], weights)) > 0.5
+Z = Z.reshape(xx.shape)
+
+plt.contourf(xx, yy, Z, alpha=0.4)
+plt.scatter(X_train_std[:, 0], X_train_std[:, 1], c=y_train, alpha=0.8)
+plt.title('Logistic Regression Decision Boundaries')
+plt.xlabel('Sepal length')
+plt.ylabel('Sepal width')
+
+plt.savefig('plot.png')
+
+
+
+
+
+
+
+======================================================================================
+
+
+
+
+
+
+knn 
+
+
+
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+import numpy as np
+from collections import Counter
+
+
+# Load iris dataset
+iris = load_iris()
+X, y = iris.data, iris.target
+class_names = iris.target_names
+
+# Split dataset into training set and test set
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+
+class KNN:
+    def __init__(self, k=3):
+        self.k = k
+
+    def fit(self, X, y):
+        self.X_train = X
+        self.y_train = y
+
+    def predict(self, X):
+        y_pred = [self._predict(x) for x in X]
+        return np.array(y_pred)
+
+    def _predict(self, x):
+        # Compute distances between x and all examples in the training set
+        distances = [np.linalg.norm(x - x_train) for x_train in self.X_train]
+        # Sort by distance and return indices of the first k neighbors
+        k_indices = np.argsort(distances)[:self.k]
+        # Extract the labels of the k nearest neighbor training samples
+        k_nearest_labels = [self.y_train[i] for i in k_indices]
+        # return the most common class label
+        most_common = Counter(k_nearest_labels).most_common(1)
+        return most_common[0][0]
+
+# Create a k-NN classifier with 3 neighbors
+knn = KNN(k=3)
+
+# Train the model using the training sets
+knn.fit(X_train, y_train)
+
+# Predict the response for test dataset
+y_pred = knn.predict(X_test)
+
+print("Predictions:", class_names[y_pred])
+
+
+# Optional confusion matrix
+from sklearn.metrics import classification_report, confusion_matrix
+# Print confusion matrix
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+# Print classification report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+
+
+
+
+
+
+=================================================================================================
+
+
+
+
+
+
+
+
+
+naive bayers
+
+
+
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+
+# Load iris dataset
+iris = load_iris()
+X, y = iris.data, iris.target
+class_names = iris.target_names
+
+# Split dataset into training set and test set
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+
+class NaiveBayes:
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self._classes = np.unique(y)
+        n_classes = len(self._classes)
+
+        # calculate mean, var, and prior for each class
+        self._mean = np.zeros((n_classes, n_features), dtype=np.float64)
+        self._var = np.zeros((n_classes, n_features), dtype=np.float64)
+        self._priors =  np.zeros(n_classes, dtype=np.float64)
+
+        for idx, c in enumerate(self._classes):
+            X_c = X[y==c]
+            self._mean[idx, :] = X_c.mean(axis=0)
+            self._var[idx, :] = X_c.var(axis=0)
+            self._priors[idx] = X_c.shape[0] / float(n_samples)
+
+    def predict(self, X):
+        y_pred = [self._predict(x) for x in X]
+        return np.array(y_pred)
+
+    def _predict(self, x):
+        posteriors = []
+
+        # calculate posterior probability for each class
+        for idx, c in enumerate(self._classes):
+            prior = np.log(self._priors[idx])
+            class_conditional = np.sum(np.log(self._pdf(idx, x)))
+            posterior = prior + class_conditional
+            posteriors.append(posterior)
+            
+        # return class with highest posterior probability
+        return self._classes[np.argmax(posteriors)]
+
+    def _pdf(self, class_idx, x):
+        mean = self._mean[class_idx]
+        var = self._var[class_idx]
+        numerator = np.exp(- (x-mean)**2 / (2 * var))
+        denominator = np.sqrt(2 * np.pi * var)
+        return numerator / denominator
+
+# Create a Naive Bayes Classifier
+nb = NaiveBayes()
+
+# Train the model using the training sets
+nb.fit(X_train, y_train)
+
+# Predict the response for test dataset
+y_pred = nb.predict(X_test)
+
+# Print class names instead of class numbers
+print("Predictions:", class_names[y_pred])
+
+
+
+
+
+
+
+==========================================================================================================
+
+
+
+
+
+
+
+
+kmeans 
+
+
+
+
+
+
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+
+
+# Load iris dataset
+iris = load_iris()
+X = iris.data
+class_names = iris.target_names
+
+# Split dataset into training set and test set
+X_train, X_test = train_test_split(X, test_size=0.3, random_state=1)
+
+class KMeans:
+    def __init__(self, K=3, max_iters=100):
+        self.K = K
+        self.max_iters = max_iters
+
+        # list of sample indices for each cluster
+        self.clusters = [[] for _ in range(self.K)]
+        # mean feature vector for each cluster
+        self.centroids = []
+
+    def fit(self, X):
+        self.X = X
+        self.n_samples, self.n_features = X.shape
+
+        # initialize centroids as random samples
+        random_sample_idxs = np.random.choice(self.n_samples, self.K, replace=False)
+        self.centroids = [self.X[idx] for idx in random_sample_idxs]
+
+        # optimization
+        for _ in range(self.max_iters):
+            # update clusters
+            self.clusters = self._create_clusters(self.centroids)
+            # update centroids
+            centroids_old = self.centroids
+            self.centroids = self._get_centroids(self.clusters)
+            # check for convergence
+            if self._is_converged(centroids_old, self.centroids):
+                break
+
+    def predict(self, X):
+        labels = np.empty(self.n_samples)
+
+        # assign label to each sample
+        for idx, sample in enumerate(X):
+            for cluster_idx, cluster in enumerate(self.clusters):
+                if idx in cluster:
+                    labels[idx] = cluster_idx
+        return labels
+
+    def _get_centroids(self, clusters):
+        centroids = np.zeros((self.K, self.n_features))
+        for cluster_idx, cluster in enumerate(clusters):
+            cluster_mean = np.mean(self.X[cluster], axis=0)
+            centroids[cluster_idx] = cluster_mean
+        return centroids
+
+    def _create_clusters(self, centroids):
+        clusters = [[] for _ in range(self.K)]
+        for idx, sample in enumerate(self.X):
+            centroid_idx = self._closest_centroid(sample, centroids)
+            clusters[centroid_idx].append(idx)
+        return clusters
+
+    def _closest_centroid(self, sample, centroids):
+        distances = np.zeros(self.K)
+        for idx, centroid in enumerate(centroids):
+            distances[idx] = np.linalg.norm(sample - centroid)
+        closest_index = np.argmin(distances)
+        return closest_index
+
+    def _is_converged(self, centroids_old, centroids):
+        distances = np.zeros(self.K)
+        for idx in range(self.K):
+            distances[idx] = np.linalg.norm(centroids_old[idx] - centroids[idx])
+        return sum(distances) == 0
+
+    
+
+# Create a KMeans object
+k = KMeans(K=3, max_iters=100)
+k.fit(X_train)
+
+# Predict the clusters for the data
+y_pred = k.predict(X_train)
+
+# Convert y_pred to int
+y_pred = y_pred.astype(int)
+
+print("Predictions:", class_names[y_pred])
+
+
+
+
+
+=================================================================================================================
